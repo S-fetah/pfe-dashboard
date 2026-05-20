@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Loader2, Mail, Calendar as CalIcon, ChevronRight, X as XIcon } from 'lucide-react'
+import { Search, Loader2, Mail, Calendar as CalIcon, ChevronRight, X as XIcon, Check, X } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { doctorApi } from '../services/api'
 
@@ -15,6 +15,7 @@ export default function Patients() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
+  const [updating, setUpdating] = useState(null)
 
   useEffect(() => {
     doctorApi.getPatients()
@@ -28,6 +29,22 @@ export default function Patients() {
   )
 
   const getSC = (s) => BC[s] || BC['pending acceptence']
+
+  const handleBookingStatus = async (bookingId, status) => {
+    if (updating) return
+    setUpdating(bookingId)
+    try {
+      await doctorApi.updateBookingStatus(bookingId, status)
+      toast.success(status === 'accepted' ? 'Booking accepted!' : 'Booking rejected')
+      const res = await doctorApi.getPatients()
+      setPatients(res.data?.data || [])
+      setSelected(null)
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update booking')
+    } finally {
+      setUpdating(null)
+    }
+  }
 
   if (loading) return <div className="pg-load"><Loader2 size={36} className="spnr" /></div>
 
@@ -46,8 +63,9 @@ export default function Patients() {
       <div className="pts-grid">
         {filtered.map((p, i) => {
           const sc = getSC(p.bookingStatus)
+          const isPending = p.bookingStatus === 'pending acceptence'
           return (
-            <div key={p.userId || i} className="pt-card" onClick={() => setSelected(p)}>
+            <div key={p.userId || i} className="pt-card" onClick={() => !isPending && setSelected(p)}>
               <div className="pt-av" style={{ background: sc.bg, color: sc.color }}>
                 {p.user?.fullName?.charAt(0)?.toUpperCase() || '?'}
               </div>
@@ -56,7 +74,17 @@ export default function Patients() {
                 <span><Mail size={12} /> {p.user?.email || '--'}</span>
               </div>
               <span className="pt-status" style={{ background: sc.bg, color: sc.color }}>{p.bookingStatus || 'pending'}</span>
-              <ChevronRight size={16} className="pt-arrow" />
+              {isPending && (
+                <div className="pt-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="pt-btn-accept" onClick={() => handleBookingStatus(p.bookingId, 'accepted')} disabled={updating === p.bookingId}>
+                    <Check size={14} />
+                  </button>
+                  <button className="pt-btn-reject" onClick={() => handleBookingStatus(p.bookingId, 'rejected')} disabled={updating === p.bookingId}>
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+              {!isPending && <ChevronRight size={16} className="pt-arrow" />}
             </div>
           )
         })}
@@ -74,6 +102,16 @@ export default function Patients() {
                 <p className="mod-sub"><Mail size={14} /> {selected.user?.email || '--'}</p>
               </div>
             </div>
+            {selected.bookingStatus === 'pending acceptence' && (
+              <div className="mod-actions">
+                <button className="mod-btn-accept" onClick={() => handleBookingStatus(selected.bookingId, 'accepted')} disabled={updating === selected.bookingId}>
+                  <Check size={16} /> Accept
+                </button>
+                <button className="mod-btn-reject" onClick={() => handleBookingStatus(selected.bookingId, 'rejected')} disabled={updating === selected.bookingId}>
+                  <X size={16} /> Reject
+                </button>
+              </div>
+            )}
             <div className="mod-body">
               <h4><CalIcon size={16} /> Appointment History</h4>
               {(selected.appointments || []).length === 0 ? (
@@ -158,6 +196,20 @@ export default function Patients() {
         .mod-item-info span { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; }
         .tbl-badge { display: inline-block; padding: 4px 14px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; text-transform: capitalize; }
         .mod-close-btn { width: 100%; margin-top: 24px; padding: 12px; background: var(--border); border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
+        .pt-actions { display: flex; gap: 6px; margin-left: 8px; }
+        .pt-btn-accept, .pt-btn-reject { width: 32px; height: 32px; border: none; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .pt-btn-accept { background: #d1fae5; color: #065f46; }
+        .pt-btn-accept:hover { background: #a7f3d0; }
+        .pt-btn-reject { background: #fee2e2; color: #991b1b; }
+        .pt-btn-reject:hover { background: #fecaca; }
+        .pt-btn-accept:disabled, .pt-btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }
+        .mod-actions { display: flex; gap: 12px; margin-bottom: 20px; }
+        .mod-btn-accept, .mod-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .mod-btn-accept { background: #059669; color: white; }
+        .mod-btn-accept:hover { background: #047857; }
+        .mod-btn-reject { background: #dc2626; color: white; }
+        .mod-btn-reject:hover { background: #b91c1c; }
+        .mod-btn-accept:disabled, .mod-btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </div>
   )

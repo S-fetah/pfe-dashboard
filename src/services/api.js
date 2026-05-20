@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://medi-care-vg2a.onrender.com/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({ baseURL: API_BASE })
 
@@ -17,7 +17,7 @@ api.interceptors.response.use(
 
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
-  signup: (data) => api.post('/auth/signup', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  signup: (data) => api.post('/auth/signup', data),
   getProfile: () => api.get('/user'),
   getProtected: () => api.get('/protected'),
 }
@@ -39,4 +39,5 @@ export const doctorApi = {
   createPayment: (data) => api.post('/doctors/payments', data),
   updatePayment: (paymentId, data) => api.put(`/doctors/payments/${paymentId}`, data),
   deletePayment: (paymentId) => api.delete(`/doctors/payments/${paymentId}`),
+  updateBookingStatus: (bookingId, status) => api.put(`/doctors/bookings/${bookingId}/status`, { status }),
 }

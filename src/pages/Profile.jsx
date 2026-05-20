@@ -33,10 +33,17 @@ export default function Profile() {
     if (profile.certification.length === 0) { toast.error('Add at least one certification'); return }
     setSaving(true)
     try {
-      await doctorApi.completeBio(profile)
-      toast.success('Profile saved!')
-    } catch { toast.error('Failed to save') }
-    finally { setSaving(false) }
+      const res = await doctorApi.completeBio(profile)
+      toast.success(res.data?.message || 'Profile saved!')
+      const savedUser = JSON.parse(localStorage.getItem('doctorUser') || '{}')
+      savedUser.details = { ...profile }
+      localStorage.setItem('doctorUser', JSON.stringify(savedUser))
+    } catch (err) {
+      console.error('CompleteBio error:', err.response || err)
+      toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const add = (field) => {
