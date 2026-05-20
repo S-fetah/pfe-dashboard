@@ -18,7 +18,7 @@ export default function Appointments() {
 
   const fetch = async () => {
     try {
-      const res = await doctorApi.getUpcomingAppointments()
+      const res = await doctorApi.getAllAppointments()
       setAppointments(res.data?.data || [])
     } catch { toast.error('Failed to load') }
     finally { setLoading(false) }

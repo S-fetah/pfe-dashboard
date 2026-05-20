@@ -31,6 +31,7 @@ export const adminApi = {
 export const doctorApi = {
   completeBio: (data) => api.put('/doctors/completeBio', data),
   getPatients: () => api.get('/doctors/patients'),
+  getAllAppointments: () => api.get('/doctors/appointments'),
   getUpcomingAppointments: () => api.get('/doctors/appointments/upcoming'),
   createAppointment: (data) => api.post('/doctors/appointments/create', data),
   updateAppointment: (data) => api.put('/doctors/appointments/update', data),

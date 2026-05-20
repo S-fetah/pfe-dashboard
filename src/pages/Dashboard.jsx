@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      doctorApi.getUpcomingAppointments().catch(() => ({ data: { data: [] } })),
+      doctorApi.getAllAppointments().catch(() => ({ data: { data: [] } })),
       doctorApi.getPatients().catch(() => ({ data: { data: [] } })),
     ]).then(([aptRes, patRes]) => {
       const apts = aptRes.data?.data || []
